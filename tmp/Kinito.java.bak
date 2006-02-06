@@ -1,0 +1,105 @@
+
+package Kinito;
+import javax.microedition.midlet.MIDlet;
+import javax.microedition.lcdui.*;
+
+public class Kinito extends MIDlet implements CommandListener {
+
+    /** The number of characters in numeric text field. */
+    private static final int NUM_SIZE=5;
+
+    /** Soft button for exiting the game. */
+    private final Command exitCmd  = new Command("Salir", Command.EXIT, 2);
+
+    /** Menu item for changing game levels. */
+    private final Command calcCmd = new Command("Tirar", Command.SCREEN, 1);
+
+    /** A text field to keep the first argument. */
+    private final TextField t1 = new TextField(null, "", NUM_SIZE,
+            TextField.DECIMAL);
+
+    /** A text field to keep the second argument. */
+    private final TextField t2 = new TextField(null, "", NUM_SIZE,
+            TextField.DECIMAL);
+
+    /** A text field to keep the result of calculation. */
+    private final TextField tr = new TextField("Result", "", NUM_SIZE,
+            TextField.UNEDITABLE);
+
+    /** A choice group with available operations. */
+    private final ChoiceGroup cg = new ChoiceGroup("", ChoiceGroup.POPUP,
+            new String[] {"Tirar", "Levantar", "Pasar", "Pasar kinito"}, null);
+
+    /** An alert to be reused for differemt errors. */
+    private final Alert alert = new Alert("Error", "", null, AlertType.ERROR);
+
+    /** Indicates if the application is initialized. */
+    private boolean isInitialized = false;
+
+    /**
+     * Creates the calculator view and action buttons.
+     */
+    protected void startApp() {
+        if (isInitialized) {
+            return;
+        }
+        Form f = new Form("Kinito!");
+        f.append(t1);
+        f.append(cg);
+	f.append(t2);
+        f.append(tr);
+        f.addCommand(exitCmd);
+        f.addCommand(calcCmd);
+        f.setCommandListener(this);
+        Display.getDisplay(this).setCurrent(f);
+        alert.addCommand(new Command("Back", Command.SCREEN, 1));
+        isInitialized = true;
+    }
+
+    /**
+     * Does nothing. Redefinition is required by MIDlet class.
+     */
+    protected void destroyApp(boolean unconditional) {}
+
+    /**
+     * Does nothing. Redefinition is required by MIDlet class.
+     */
+    protected void pauseApp() {}
+
+    /**
+     * Responds to commands issued on CalculatorForm.
+     *
+     * @param c command object source of action
+     * @param d screen object containing actioned item
+     */
+    public void commandAction(Command c, Displayable d) {
+        if (c == exitCmd) {
+            destroyApp(false);
+            notifyDestroyed();
+            return;
+        }
+
+            alert.setString( " argument is out of range.");
+            Display.getDisplay(this).setCurrent(alert);
+
+        /*
+         * The resulted string may exceed the text max size.
+         * We need to correct last one then.
+         */
+    }
+
+    /**
+     * Extracts the double number from text field.
+     *
+     * @param t the text field to be used.
+     * @param type the string with argument number.
+     * @throws NumberFormatException is case of wrong input.
+     */
+    private int getNumber(TextField t, String type){
+
+            alert.setString("No " + type + " Argument");
+            Display.getDisplay(this).setCurrent(alert);
+        return 0;
+    }
+
+} // end of class 'CalculatorMIDlet' definition
