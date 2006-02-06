@@ -1,0 +1,748 @@
+
+package Kinito;
+import javax.microedition.lcdui.*;
+import javax.microedition.midlet.*;
+import java.util.Random;
+import java.util.Vector;
+
+public class Kino implements CommandListener {
+
+	private int dado1, dado2;
+	//private ImageItem imgCached[];
+	private Vector imgCached;
+	private String strThemePrefix = "/themes/default/default_";
+	private int imgCachedCounter, imgCachedTotal;
+	private int kino_intentos, kino_dados, kino_dado1, kino_dado2, kino_vasos;
+	private Random rnd;
+	private boolean isRunning;
+
+
+    	public static final Command cmd_lev  = new Command("Levantar", Command.SCREEN, 1);
+    	public static final Command cmd_levBeber  = new Command("Levantar y beber", Command.ITEM, 1);
+    	public static final Command cmd_tirar  = new Command("Tirar", Command.ITEM, 2);
+    	public static final Command cmdTaparPasar  = new Command("Tapar", Command.SCREEN, 2);
+    	public static final Command cmdLevantar  = new Command("Levantar", Command.SCREEN, 1);
+    	public static final Command cmdTirarAbelardo  = new Command("Tirar Abelardo", Command.SCREEN, 1);
+    	public static final Command cmdAbout  = new Command("Acerca de", Command.HELP, 30);
+    	public static final Command cmdKino  = new Command("Pasar kinito", Command.SCREEN, 2);
+    	public static final Command cmdTiraKino  = new Command("Pasar kinito", Command.SCREEN, 1);
+    	public static final Command cmdComenzar  = new Command("Continuar", Command.SCREEN, 1);
+    	public static final Command cmdVolver  = new Command("Continuar", Command.BACK, 1);
+
+    public final Command exitCmd  = new Command("Salir", Command.EXIT, 2);
+
+    public final Command cmdTirar = new Command("Tirar", Command.SCREEN, 1);
+
+    private boolean isInitialized = false;
+    private CommandListener cmdli;
+    private Kinito mdl;
+    Display disp;
+    KinoCanvas kc;
+
+    public Kino (Kinito mid){
+	disp = Display.getDisplay(mid);
+	mdl = mid;
+	cmdli = this;
+	imgCachedCounter = 0;
+	imgCachedTotal = 20;
+	imgCached = new Vector(imgCachedTotal); 
+	rnd = new Random ();
+	isRunning = false;
+	//loadImages();
+	mostrar_form_tirada ();
+    }
+    public void destroyApp (boolean d) {
+            mdl.destroyApp(false);
+            mdl.notifyDestroyed();
+    }
+    public void pauseApp () {}
+    public void startApp () {}
+
+    public void commandAction(Command c, Displayable d) {
+        if (c == exitCmd) {
+            mdl.destroyApp(false);
+            mdl.notifyDestroyed();
+            return;
+        }
+	else if (c == cmdTirar){
+		tirada (true); // true uses images, false do not
+	}
+	else if (c == cmd_tirar){
+		tirada (true); // true uses images, false do not
+	}
+	else if (c == cmd_lev){
+		mostrar_opciones ();
+	}
+	else if(c == cmd_levBeber){
+		mostrar_opciones ();
+	}
+	else if (c == cmdTaparPasar){
+		form_tapado ();
+	}
+	else if (c == cmdLevantar){
+		form_levantado (true); // true uses images, false do not
+	}
+	else if (c == cmdTirarAbelardo){
+		form_abelardo ();
+	}
+	else if (c == cmdAbout){
+		About.showAbout(Display.getDisplay(mdl), cmdli, this);
+	}
+	else if (c == cmdKino){ // Invocado desde mostrar_form_kino()
+		tira_kino_player1(kino_dados);
+	}
+	else if (c == cmdTiraKino){ // Invocado desde mostrar_form_kino()
+		tira_kino_player1(kino_dados);
+	}
+	else if (c == cmdComenzar){
+		mostrar_form_tirada ();
+	}
+	else if (c.getLabel() == "Tirar"){
+		tirada (true); // true uses images, false do not
+	}
+	else if (c.getLabel() == "Tirar"){
+		form_levantado (true); // true uses images, false do not
+	}
+
+	if (c.getCommandType() == Command.BACK){
+		mostrar_form_tirada ();
+	}
+	
+	System.out.println("Command Label: " + c.getLabel() + " - Tipo: " + c.getCommandType());
+    }
+
+    public void splash_screen () //throws java.io.IOException
+    {
+	    Form frm = new Form ("Kinito 1.0");
+	    //System.out.println ("Width: " + frm.getWidth() + "\nHeight: " + frm.getHeight());
+	    //Image img_tmp = Image.createImage ("/icons/splash.jpg");
+	    //Image img = scaleFastImage (img_tmp, frm.getWidth(), frm.getHeight());
+
+	    //Alert alert = new Alert ("Kinito 1.0", "", null, AlertType.CONFIRMATION);
+	    //alert.setTimeout (Alert.FOREVER);
+
+	    //alt.setImage (img);
+	    frm.addCommand (cmdComenzar);
+	    frm.setCommandListener (cmdli);
+	    disp.setCurrent(frm);
+    }
+
+    public void mostrar_form_tirada ()
+    {
+		cleanMemory ();
+
+        Form formTirada = new Form("Kinito 1.0");
+        formTirada.append("Pulsa en \"Tirar\" para empezar a jugar");
+        formTirada.addCommand(cmdAbout);
+        formTirada.addCommand(exitCmd);
+        formTirada.addCommand(cmdTirar);
+        formTirada.setCommandListener(cmdli);
+        Display.getDisplay(mdl).setCurrent(formTirada);
+    }
+
+    public void form_abelardo ()
+    {
+	Form fAbelardo = new Form ("Abelardo");
+	
+        fAbelardo.append(new StringBuffer().append("Bebe la/el ").append(getNumber()).append(" ª/º").toString());
+        fAbelardo.addCommand(exitCmd);
+        fAbelardo.addCommand(cmdTirar);
+        fAbelardo.setCommandListener(cmdli);
+	Display.getDisplay(mdl).setCurrent(fAbelardo);
+    }
+
+    public void form_tapado ()
+    {
+	    
+	    try{
+		cleanMemory ();
+
+		Form fGeneral = new Form ("levanta o tira");
+
+		fGeneral.append ("Qué eliges, ¿Levantar o seguir jugando?");
+		fGeneral.addCommand (cmdTirar);
+		fGeneral.addCommand (cmdLevantar);
+		fGeneral.setCommandListener (cmdli);
+		Display.getDisplay(mdl).setCurrent (fGeneral);
+
+	    }
+	    catch (java.lang.IllegalStateException e){
+		    System.out.println(e.toString());
+	    }
+	   
+	    
+
+    }
+
+    /*
+     * Muestra los dados de la tirada anterior
+     *
+     * */
+    public void form_levantado (boolean showImages)
+    {
+	try{
+		cleanMemory ();
+
+	    Form fGeneral = new Form ("Tirada anterior");
+		//String str_t = "La tirada anterior ha sido: ";
+		//str_t += "\n\nDado 1: " + dado1 + "\nDado 2: " + dado2 + "\n\n";
+		//str_t += "Total: " + (dado1 + dado2) + "\n";
+		int suma = dado1 + dado2;
+		String str_t = new StringBuffer().append("La anterior tirada ha sido:\n\n").append("Dado1: ").append(dado1).append("\nDado2: ").append(dado2).append("\n\nTotal: ").append(suma).toString();
+		
+		if (showImages){
+			//fLevantado.append (scaleFastImage(getImage(dado1, dado2), fLevantado.getWidth(), fLevantado.getHeight()/2));
+			String strAltText = new StringBuffer().append(dado1).append("").append(dado2).toString();
+			if (!isImageCached(strAltText)){
+				ImageItem imgItem = new ImageItem ("", getImage (dado1, dado2), Item.LAYOUT_CENTER, "Kinito 1.0");
+				fGeneral.append (imgItem);
+			}
+			else{
+				fGeneral.append(getImageCached(strAltText));
+			}
+			strAltText = null;
+		}
+		else{
+			fGeneral.append (str_t);
+		}
+		fGeneral.addCommand(cmdTirar);
+		fGeneral.addCommand(exitCmd);
+		fGeneral.setCommandListener(cmdli);
+		Display.getDisplay (mdl).setCurrent (fGeneral);
+		str_t = null;
+	}
+	catch (java.io.IOException e){
+	    System.out.println("ERROR Levantado: " + e.toString());
+	    form_levantado(false); // Si las imágenes no funcionan, volvemos a ejecutar la función pero con solo texto
+	}
+    }
+    
+    public void tira_kino_player1(int TiraDados)
+    {
+		cleanMemory ();
+	    try{
+		    // clean the cached objects
+
+		int suma=0;
+		Form fkino1 = new Form ("Kinito jugador 1");
+		fkino1.addCommand (exitCmd);
+		
+		if (TiraDados == 2){
+			dado1 = getNumber(); 
+			dado2 = getNumber();
+		}
+		else if (TiraDados == 1){
+			dado1 = getNumber();
+		}
+		kino_intentos += 1;
+		
+		if ((dado1 == 1 && dado2 == 2) 
+				|| (dado1 == 2 && dado2 == 1)
+				|| (dado1 == 5 && dado2 == 6)
+				|| (dado1 == 6 && dado2 == 5)){
+			//str = "Dado 1: " + dado1 + "\nDado 2: " + dado2 + "\n\n";
+			//str += "PERFECTO!\n\nDevuélvele el kino y machácalo!!!\n\n";
+			//strItem.setText (str);
+			fkino1.append (new StringBuffer().append("Dado 1: ").append(dado1).append("\nDado 2: ").append(dado2).append("\n\n").append("PERFECTO!\n\nDevuélvele el kino y machácalo!!!\n\n").toString());
+			kino_intentos = 0;
+			kino_vasos += 1;
+		
+			fkino1.addCommand (cmdTiraKino);
+		}
+		else{
+		
+			fkino1.addCommand (cmdTiraKino);
+
+			if ((dado1 == dado2) || (dado2 == dado1)){
+				kino_intentos -= 1;
+			}
+		
+	
+			if (kino_intentos < 3){
+				fkino1.append (new StringBuffer().append("Dado1: ").append(dado1).append(" \nDado2: "). append(dado2).append("\n\n").append("Vas ").append(kino_intentos).append(" tiradas de 3\n\nVais ").append(kino_vasos).append(" acumulados").toString());
+			}
+		}
+		
+		
+		if (kino_intentos == 3){
+			// FIXME: Hay que hacer el control de vasos correctamente
+			// no esta basura!
+			if (kino_vasos == 0) kino_vasos = 1;
+			
+			fkino1.append (new StringBuffer().append("Dado 1: ").append(dado1).append("\nDado 2: ").append(dado2).append("\n\nPERDISTE!\n\nBébete ").append(kino_vasos).append(" pedazo de vasos").toString());
+			kino_intentos = 0;
+			kino_vasos = 1;
+			
+		}
+	
+		fkino1.addCommand (cmdTirar);
+	
+		
+		
+		fkino1.setCommandListener (cmdli);
+		Display.getDisplay (mdl).setCurrent(fkino1);
+		fkino1 = null;
+	}
+	catch (Error ex){
+		System.out.println ("Excepción!:\n" + ex.toString());
+	}
+    }
+	
+    public void opciones_kinito()
+    {
+	try{
+		// clean the cached objects
+		cleanMemory ();
+
+		Form fkino1 = new Form ("Kinito jugador 1");
+		////fkino1.append (str);
+		fkino1.addCommand (exitCmd);
+		fkino1.addCommand (cmdTiraKino);
+	
+		fkino1.setCommandListener (cmdli);
+		Display.getDisplay(mdl).setCurrent(fkino1);
+		fkino1 = null;
+	}
+	catch (java.lang.NullPointerException e){
+		System.out.println("opciones_kinito()");
+	}
+    }
+
+    public void tirar_pares ()
+    {
+    }
+
+    /*
+     * Función principal para procesar los datos de los dados, generar los
+     * dados aleatoriamente,...
+    */
+
+    public void tirada (boolean showImages)
+    {
+	    try{
+		    // clean the cached objects
+		cleanMemory ();
+
+		// do not execute this function more than once at a time
+		if (isRunning){
+			Alert alt = new Alert ("Tranquilidad txo!", "Estamos procesando los datos, ¡Amparo!", null, AlertType.INFO);
+			Display.getDisplay(mdl).setCurrent(alt);
+			return ;
+		}
+		isRunning = true;
+
+		int suma=0;
+		String str;
+		Form fTirada = new Form ("Tu tirada es");
+		ImageItem imgItem;
+		Image img;
+	
+		dado1 = getNumber ();
+		dado2 = getNumber ();
+		suma = dado1 + dado2;
+		
+		str = new StringBuffer().append("Dado1: ").append(dado1).append("\nDado2: ").append(dado2).append("\n\n").toString();
+	
+		if (dado1 != dado2){
+			//str += "Total: " + suma + "\n\n";
+			str = new StringBuffer().append(str).append("Total: ").append(suma).append("\n\n").toString();
+		}
+		else{
+			if ((dado1 == 6 && dado2 == 6) || (dado2 == 6 && dado1 == 6)){
+				//str += "REGATAAAAAAAAAAAAAAAAAAAAA!";
+				str = new StringBuffer().append(str).append("REGATAAAAAAAAAAAAAAAAAAAAA!").toString();
+				fTirada.setTitle("REGATAAAA!!");
+		        	fTirada.addCommand(cmdTirar);
+			}
+			else{
+				//str += "¡Tienes PAREJAS de " + dado1 + "!";
+				str = new StringBuffer().append(str).append("¡Tienes PAREJAS de ").append(dado1).append("!").toString();
+				fTirada.setTitle("Parejas");
+			}
+		}
+	
+		if ((dado1 == 1 && dado2 == 2) 
+				|| (dado1 == 2 && dado2 == 1)
+				|| (dado1 == 5 && dado2 == 6)
+				|| (dado1 == 6 && dado2 == 5))
+		{
+			//str += "KINITOOOOO!!!!";
+			str = new StringBuffer().append(str).append("KINITOOOOO!!!!").toString();
+			// FIXME: Mostrar imagen
+			fTirada.setTitle("Kinito");
+			
+			isRunning = false;
+			
+			mostrar_form_kinito();
+			return;
+		}
+		
+		if ((dado1 == 1 && dado2 == 3) || (dado2 == 1 && dado1 == 3)){ // 1 y 3 beben tres
+			str += new StringBuffer().append(str).append("¡1 y 3 beben tres!").toString();
+			fTirada.setTitle("1 y 3 beben tres");
+		        fTirada.addCommand(cmdTirar);
+		}
+		else
+		if ((dado1 == 1 && dado2 == 4) || (dado1 == 4 && dado2 == 1)){ // Abelardo
+			str = new StringBuffer().append(str).append("¡Abelardo!").toString();
+			fTirada.setTitle("Abelardo");
+		        fTirada.addCommand(cmdTirarAbelardo);
+		}
+		else{
+		        fTirada.addCommand(cmdTaparPasar);
+		}
+		if (showImages){
+			
+			// little cache system
+			// XXX: Use *always* StringBuffer to save memory
+			String strAltText = new StringBuffer().append(dado1).append("").append(dado2).toString();
+			//System.out.println("tirada(): " + strAltText);
+			
+			//if (!isImageCached(strAltText)){
+			if (!isImageCached(strAltText)){
+				System.out.println("tirada(): " + strAltText);
+				//img = getImage(dado1, dado2);
+				imgItem = new ImageItem ("", scaleFastImage(getImage(dado1, dado2), 30, 30, false), Item.LAYOUT_CENTER, strAltText);
+				setImageCached (imgItem);
+				fTirada.append (imgItem);
+				imgItem = null;
+				img = null;
+			}
+			else{
+				ImageItem img_t = getImageCached (strAltText);
+				System.out.println("ImageCached: " + imgCachedCounter + " - " + img_t.getImage().getWidth());
+				fTirada.append (img_t.getImage());
+				img_t = null;
+			}
+			strAltText = null;
+		}
+		else{
+			fTirada.append (str);
+		}
+		fTirada.addCommand(exitCmd);
+		
+		fTirada.setCommandListener(cmdli);
+		Display.getDisplay (mdl).setCurrent (fTirada);
+		isRunning = false;
+		
+		str = null;
+	
+	    }
+	    catch (java.io.IOException e){
+		cleanMemory ();
+		    Alert alt = new Alert ("Problemas...", e.toString(), null, AlertType.ERROR);
+		    Display.getDisplay(mdl).setCurrent(alt);
+		System.out.println("ERROR Tirada: " + e.toString());
+		isRunning = false;
+		tirada (false);
+	    }
+	    catch (java.lang.NullPointerException e){
+		System.out.println("ERROR Tirada NULL: " + e.toString());
+		isRunning = false;
+	    }
+	    catch (java.lang.OutOfMemoryError e){
+		    // what we should do in this case? show this alert or just change to "text mode"?
+		    Alert alt = new Alert ("I can't load the Image, No memory man!" + e.getMessage());
+		    alt.setType(AlertType.ERROR);
+		    alt.addCommand (cmdVolver);
+		    alt.setCommandListener (cmdli);
+		    Display.getDisplay(mdl).setCurrent(alt);
+		isRunning = false;
+	    }
+
+    }
+
+    public void mostrar_form_pares ()
+    {
+        //formPares = new Form("Tienes pares, ¿Qué hacemos?");
+        //formPares.append(cg);
+        //formPares.addCommand(exitCmd);
+        //formPares.addCommand(cmdTirar);
+        //formPares.setCommandListener(cmdli);
+        //Display.getDisplay(mdl).setCurrent(formPares);
+    }
+
+    public void mostrar_form_kinito ()
+    {
+	    cleanMemory ();
+
+	try{
+		kino_dados = 2; // por defecto tiramos con los 2 dados
+		kino_intentos = 0;
+		kino_vasos=1;
+        
+		Form formKinito = new Form("Kinito! Suerte!");
+		formKinito.append ("KINITO\n\n\nTienes 3 tiradas.\nPares repite tirada.\n");
+       		formKinito.addCommand(cmdKino);
+       		formKinito.addCommand(cmdTirar);
+	 	formKinito.addCommand(exitCmd);
+       	 	formKinito.setCommandListener(cmdli);
+       		Display.getDisplay(mdl).setCurrent(formKinito);
+		formKinito = null;
+	}
+	catch (java.lang.NullPointerException e){
+		System.out.println("mostrar_form_kinito()");
+	}
+    }
+
+    public void mostrar_opciones ()
+    {
+		cleanMemory ();
+
+	try{
+		List lstOptions = new List ("Selecciona tu opción", 0);
+		lstOptions.setSelectCommand (cmd_tirar);
+		lstOptions.addCommand (cmd_lev);
+		lstOptions.addCommand (cmd_levBeber);
+		lstOptions.addCommand (cmd_tirar);
+		lstOptions.setCommandListener (cmdli);
+		Display.getDisplay(mdl).setCurrent(lstOptions);
+
+		lstOptions = null;
+	}
+	catch (java.lang.NullPointerException e){
+		System.out.println("mostrar_opciones()");
+	}
+    }
+
+    public int generar_numero_aleatorio ()
+    {
+	    return 1;
+    }
+
+    
+    public Image getImage(int num1, int num2) throws java.io.IOException
+    {
+	    String str = new StringBuffer().append(strThemePrefix).append(num1).append(num2).append(".jpg").toString();
+
+	    // Esto nos permite ahorrar en imágenes, por ahora. Reducimos en la mitad el tamaño.
+	    if ((num1 == 1 && num2 == 2) || 
+			    (num1 == 1 && num2 == 3) ||
+			    (num1 == 1 && num2 == 4) ||
+			    (num1 == 1 && num2 == 5) ||
+			    (num1 == 1 && num2 == 6)){
+	    	str = new StringBuffer().append(strThemePrefix).append(num2).append(num1).append(".jpg").toString();
+		System.out.println ("Shift Dados: " + num1 + " - " + num2);
+	    }
+	    else if ((num1 == 2 && num2 == 3) || 
+			    (num1 == 2 && num2 == 4) ||
+			    (num1 == 2 && num2 == 5) ||
+			    (num1 == 2 && num2 == 6)){
+	    	//str = strThemePrefix + num2 + num1 + ".jpg";
+	    	str = new StringBuffer().append(strThemePrefix).append(num2).append(num1).append(".jpg").toString();
+		System.out.println ("Shift Dados: " + num1 + " - " + num2);
+	    }
+	    else if ((num1 == 3 && num2 == 4) || 
+			    (num1 == 3 && num2 == 5) ||
+			    (num1 == 3 && num2 == 6)){
+	    	str = new StringBuffer().append(strThemePrefix).append(num2).append(num1).append(".jpg").toString();
+		System.out.println ("Shift Dados: " + num1 + " - " + num2);
+	    }
+	    else if ((num1 == 4 && num2 == 5) || 
+			    (num1 == 4 && num2 == 6)){
+	    	str = new StringBuffer().append(strThemePrefix).append(num2).append(num1).append(".jpg").toString();
+		System.out.println ("Shift Dados: " + num1 + " - " + num2);
+	    }
+	    else if ((num1 == 5 && num2 == 6)){
+	    	str = new StringBuffer().append(strThemePrefix).append(num2).append(num1).append(".jpg").toString();
+		System.out.println ("Shift Dados: " + num1 + " - " + num2);
+	    }
+	    Image img = Image.createImage (str) ;
+
+	    return img;
+	    
+    }
+    
+
+
+	// code taken from:
+	// http://cvs.sourceforge.net/viewcvs.py/kobjects/utils4me/src/org/kobjects/lcdui/Scale/Image.java?rev=HEAD&content-type=text/vnd.viewcvs-markup
+
+    
+	public static Image scaleFastImage (Image src, int dstW, int dstH, boolean percent) {
+		int srcW = src.getWidth();
+		int srcH = src.getHeight();
+		if (percent){
+			srcW = Math.abs((src.getWidth() * dstW) / 100); // get the percent to scale
+			srcH = Math.abs((src.getHeight() * dstH) / 100); // get the percent to scale
+		}
+		
+	
+		Image tmp = Image.createImage(dstW, srcH);
+		Graphics g = tmp.getGraphics();
+		
+		int delta = (srcW << 16) / dstW;
+		int pos = delta/2;
+		
+		for (int x = 0; x < dstW; x++) {
+			g.setClip(x, 0, 1, srcH);
+			g.drawImage(src, x - (pos >> 16), 0, Graphics.LEFT | Graphics.TOP);
+			pos += delta;
+		}
+		
+		Image dst = Image.createImage(dstW, dstH);
+		g = dst.getGraphics();
+		
+		delta = (srcH << 16) / dstH;
+		pos = delta/2;
+		
+		for (int y = 0; y < dstH; y++) {
+			g.setClip(0, y, dstW, 1);
+			g.drawImage(tmp, 0, y - (pos >> 16), Graphics.LEFT | Graphics.TOP);
+			pos += delta;	
+		}
+		
+		return dst;		
+	}
+
+	// obtiene los números aletorios de los dados
+
+	public int getNumber ()
+	{
+		int dado=0;
+		dado = rnd.nextInt();
+		dado = Math.abs(dado);
+		dado = dado % 6;
+		dado += 1;
+		
+		return dado;
+	}
+
+	public ImageItem getImageCached (String str)
+	{
+		try{
+			ImageItem imgItem_temp;
+			for (int i=0;i <= imgCachedTotal;i++)
+			{
+				if (imgCached.elementAt(i) == null) break;
+				imgItem_temp = (ImageItem) imgCached.elementAt(i);
+				if (str.compareTo(imgItem_temp.getAltText()) == 0){
+					System.out.println("Extrayendo de la caché de imágenes la \"" + i + "\" - " + str);
+					return imgItem_temp;
+				}
+			}
+			System.out.println("getImageCached(): " + str);
+			imgItem_temp = null;
+
+		}
+		catch (java.lang.NullPointerException e){
+			System.out.println("getImgCached(): " + e.getMessage());
+		}
+	    	catch (java.lang.OutOfMemoryError e){
+		    // what we should do in this case? show this alert or just change to "text mode"?
+		    Alert alt = new Alert ("I can't load the Image, No memory man!");
+		    alt.setType(AlertType.ERROR);
+		    alt.addCommand (cmdVolver);
+		    alt.setCommandListener (cmdli);
+		    Display.getDisplay(mdl).setCurrent(alt);
+	    	}
+		return null;
+	}
+
+	public void setImageCached (ImageItem imgItem)
+	{
+		try{
+			if (imgCachedCounter >= imgCachedTotal) 
+				return ;
+
+			System.out.println("setImgCached(): " + imgCachedCounter);
+			//imgCached[imgCachedCounter] = imgItem;
+			imgCached.addElement((Object)imgItem);
+			imgCachedCounter++;
+			for (int i=0;i <= imgCachedTotal;i++){
+				if (imgCached.elementAt(i) != null)
+					System.out.println("setImageCached(): " + imgCachedCounter);
+			}
+		}
+		catch (java.lang.ArrayIndexOutOfBoundsException ao){
+		}
+		catch (java.lang.NullPointerException e){
+			System.out.println("setImgCached(): " + e.getMessage());
+		}
+	    	catch (java.lang.OutOfMemoryError e){
+		    // what we should do in this case? show this alert or just change to "text mode"?
+		    Alert alt = new Alert ("I can't load the Image, No memory man!");
+		    alt.setType(AlertType.ERROR);
+		    alt.addCommand (cmdVolver);
+		    alt.setCommandListener (cmdli);
+		    Display.getDisplay(mdl).setCurrent(alt);
+	    	}
+	}
+
+	public boolean isImageCached (String num)
+	{
+		// FIXME: while debugging the game for fix a problem with mem massive consumption, disable imgcached
+		
+		String numRev = new StringBuffer (num).reverse().toString();
+		System.out.println("isImageCached()num: " + imgCached.size() + " - " + imgCached.capacity() + " - " + numRev);
+		try{
+			for (int i=0;i <= imgCachedTotal;i++)
+			{
+				//if (imgCached.elementAt(i) == null) break;
+				//System.out.println ("imgCached[" + i + "]: " + imgCached[i].getAltText() + " - LengthCached: " + imgCached[i].getAltText().length() + " - LengthPassed: " + num.length());
+				ImageItem img = (ImageItem)imgCached.elementAt(i);
+				if (num.compareTo(img.getAltText()) == 0 || numRev.compareTo(img.getAltText()) == 0){
+					System.out.println("isImageCached(): YES - " + num + " - Alt: " + img.getAltText());
+					return true;
+				}
+				else{
+					System.out.println("isImageCached(): NO - " + num + " - Alt: " + img.getAltText() + " -Rev: " + numRev);
+				}
+			}
+			//return false;	
+		}
+		catch (java.lang.NullPointerException e){
+			System.out.println("isImgCached(): " + e.getMessage());
+		}
+	    	catch (java.lang.OutOfMemoryError e){
+		    // what we should do in this case? show this alert or just change to "text mode"?
+		    Alert alt = new Alert ("I can't load the Image, No memory no fun!" + e.getMessage());
+		    alt.setType(AlertType.ERROR);
+		    alt.addCommand (cmdVolver);
+		    alt.setCommandListener (cmdli);
+		    Display.getDisplay(mdl).setCurrent(alt);
+	    	}
+		catch (java.lang.ArrayIndexOutOfBoundsException ao){
+			return false;
+		}
+		return false;
+	}
+
+	public void cleanMemory ()
+	{
+		// System.gc();
+		Runtime.getRuntime().gc();
+	}
+
+	public final void loadImages ()
+	{
+		try{
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(1, 1), 40, 40, false), Item.LAYOUT_CENTER, "11") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(2, 1), 40, 40, false), Item.LAYOUT_CENTER, "21") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(2, 2), 40, 40, false), Item.LAYOUT_CENTER, "22") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(3, 1), 40, 40, false), Item.LAYOUT_CENTER, "31") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(3, 2), 40, 40, false), Item.LAYOUT_CENTER, "32") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(3, 3), 40, 40, false), Item.LAYOUT_CENTER, "33") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(4, 1), 40, 40, false), Item.LAYOUT_CENTER, "41") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(4, 2), 40, 40, false), Item.LAYOUT_CENTER, "42") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(4, 3), 40, 40, false), Item.LAYOUT_CENTER, "43") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(4, 4), 40, 40, false), Item.LAYOUT_CENTER, "44") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(5, 1), 40, 40, false), Item.LAYOUT_CENTER, "51") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(5, 2), 40, 40, false), Item.LAYOUT_CENTER, "52") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(5, 3), 40, 40, false), Item.LAYOUT_CENTER, "53") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(5, 4), 40, 40, false), Item.LAYOUT_CENTER, "54") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(5, 5), 40, 40, false), Item.LAYOUT_CENTER, "55") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(6, 1), 40, 40, false), Item.LAYOUT_CENTER, "61") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(6, 2), 40, 40, false), Item.LAYOUT_CENTER, "62") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(6, 3), 40, 40, false), Item.LAYOUT_CENTER, "63") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(6, 4), 40, 40, false), Item.LAYOUT_CENTER, "64") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(6, 5), 40, 40, false), Item.LAYOUT_CENTER, "65") );
+			imgCached.addElement ((Object)new ImageItem("", scaleFastImage(getImage(6, 6), 40, 40, false), Item.LAYOUT_CENTER, "66") );
+		}
+		catch (java.lang.NullPointerException e){
+			System.out.println("isImgCached(): " + e.getMessage());
+		}
+	    catch (java.io.IOException e){
+	    }
+	}
+}

@@ -1,0 +1,8 @@
+MIDlet-Icon: /icons/kinito.jpg
+MIDlet-Version: 1.0
+MIDlet-Vendor: Gainan Taldea
+MIDlet-Jar-URL: http://gainan-taldea.ath.cx/Kinito.jar
+MIDlet-Description: ¡El juego que esperabas!
+MIDlet-1: Kinito, /icons/Kinito.png, Kinito.Kinito
+MIDlet-Jar-Size: 22612
+MIDlet-Name: Kinito

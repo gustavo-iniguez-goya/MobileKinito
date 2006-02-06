@@ -1,0 +1,28 @@
+
+package Kinito;
+import java.lang.Thread;
+import javax.microedition.lcdui.*;
+import javax.microedition.midlet.*;
+//import Kinito.Kino;
+	
+public class KinoThread extends Thread {
+	Alert alt = new Alert ("Cargando imágenes", "Imagen", null, AlertType.INFO);
+	Kino kn;
+	int progress=0;
+	public KinoThread (Kino kn)
+	{
+		this.kn = kn;
+	}
+	public void run()
+	{
+		while (!kn.formTirada.isShown()){
+			System.out.println ("Cargando ...\r");
+			alt.setString ("Cargando imágenes..." + progress);
+			Display.getDisplay(kn.mdl).setCurrent (alt);
+		}
+	}
+	public void increment (int x)
+	{
+		progress += x;
+	}
+}

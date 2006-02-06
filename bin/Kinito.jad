@@ -1,0 +1,12 @@
+MIDlet-1: Kinito, /icons/Kinito.png, Kinito.Kinito
+MIDlet-Description: El juego que esperabas!
+MIDlet-Icon: /icons/kinito.jpg
+MIDlet-Info-URL: http://gainan-taldea.ath.cx
+MIDlet-Jar-Size: 17367
+MIDlet-Jar-URL: Kinito.jar
+MIDlet-Name: Kinito
+MIDlet-Vendor: Gainan Taldea
+MIDlet-Version: 1.0
+MicroEdition-Configuration: CLDC-1.1
+MicroEdition-Profile: MIDP-2.0
+obfuscate.script.name: proguard
