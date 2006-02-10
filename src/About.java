@@ -1,10 +1,22 @@
-/*
- * @(#)About.java	1.18 03/12/11
+
+/* Kinito for mobile phones - The first Kinito game for Mobile Phones
+ * Copyright (C) 2005-2006 - Gustavo Iñiguez Goya
  *
- * Copyright (c) 2000-2003 Sun Microsystems, Inc. All rights reserved. 
- * PROPRIETARY/CONFIDENTIAL
- * Use is subject to license terms
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
+
 
 package Kinito;
 
@@ -45,7 +57,6 @@ public class About {
 		if (display.isColor()){
 	        	Image image = Image.createImage(icon);
 			ImageItem imgItem = new ImageItem ("Acerca de Kinito 1.0", image, 3, "Kinito 1.0");
-			//frm.append(k.scaleFastImage(image, 100, 80, false));
 			frm.append(imgItem);
 	    	}
 		else{
