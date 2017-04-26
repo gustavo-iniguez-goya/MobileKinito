@@ -1,4 +1,4 @@
-# MobileKinito - (c) 2006
+# MobileKinito - (c) 2005-2006
 EL kinito para móviles viejunos.
 
 Mobile Kinito es la versión para móviles de uno de los juegos más antiguos 
